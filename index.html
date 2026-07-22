@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobTracker — Find & Track Your Job Search</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1><a href="index.html">JobTracker</a></h1>
+      <nav>
+        <a href="index.html" class="active">Search</a>
+        <a href="tracker.html">My Jobs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h2>Find Your Next Opportunity</h2>
+      <p>Search for jobs and track your applications all in one place.</p>
+    </section>
+
+    <section class="search-section">
+      <form id="search-form" aria-label="Job search">
+        <div class="search-row">
+          <input type="text" id="query" placeholder="Job title, keywords, or company" required aria-label="Search query">
+          <input type="text" id="location" placeholder="Location (e.g. Remote, New York)" aria-label="Location">
+          <button type="submit">Search</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="results" class="results" aria-live="polite">
+      <p class="placeholder-text">Enter a search to find jobs.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 JobTracker. Built to help you land your next role.</p>
+    </div>
+  </footer>
+
+  <script src="js/storage.js"></script>
+  <script src="js/search.js"></script>
+</body>
+</html>

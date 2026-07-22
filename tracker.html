@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobTracker — My Applications</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1><a href="index.html">JobTracker</a></h1>
+      <nav>
+        <a href="index.html">Search</a>
+        <a href="tracker.html" class="active">My Jobs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="tracker-header">
+      <h2>My Applications</h2>
+      <div class="filter-row">
+        <label for="status-filter">Filter by status:</label>
+        <select id="status-filter" aria-label="Filter jobs by status">
+          <option value="all">All</option>
+          <option value="saved">Saved</option>
+          <option value="applied">Applied</option>
+          <option value="interview">Interview</option>
+          <option value="offer">Offer</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="tracked-jobs" class="tracked-jobs" aria-live="polite">
+      <p class="placeholder-text">No saved jobs yet. Search for jobs and save them here!</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 JobTracker. Built to help you land your next role.</p>
+    </div>
+  </footer>
+
+  <script src="js/storage.js"></script>
+  <script src="js/tracker.js"></script>
+</body>
+</html>
