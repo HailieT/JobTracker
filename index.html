@@ -20,27 +20,101 @@
   <main class="container">
     <section class="hero">
       <h2>Find Your Next Opportunity</h2>
-      <p>Search for jobs and track your applications all in one place.</p>
+      <p>Search thousands of real jobs from 250+ companies. No sign-up required.</p>
     </section>
 
     <section class="search-section">
       <form id="search-form" aria-label="Job search">
         <div class="search-row">
-          <input type="text" id="query" placeholder="Job title, keywords, or company" required aria-label="Search query">
-          <input type="text" id="location" placeholder="Location (e.g. Remote, New York)" aria-label="Location">
+          <input type="text" id="query" placeholder="Job title, keywords, or company" aria-label="Search query">
           <button type="submit">Search</button>
+        </div>
+
+        <div class="location-row">
+          <input type="text" id="city" placeholder="City" aria-label="City">
+          <input type="text" id="state" placeholder="State" aria-label="State">
+          <select id="work-mode" aria-label="Work mode">
+            <option value="any">Any Work Mode</option>
+            <option value="remote">Remote</option>
+            <option value="in-person">In-Person</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+
+        <button type="button" id="toggle-filters" class="toggle-filters-btn" aria-expanded="false" aria-controls="advanced-filters">
+          ⚙ Advanced Filters
+        </button>
+
+        <div id="advanced-filters" class="advanced-filters hidden">
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label for="filter-education">Education Level</label>
+              <select id="filter-education">
+                <option value="any">Any</option>
+                <option value="high-school">High School / GED</option>
+                <option value="associate">Associate's Degree</option>
+                <option value="bachelor">Bachelor's Degree</option>
+                <option value="master">Master's Degree</option>
+                <option value="phd">PhD / Doctorate</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filter-degree">Degree Field</label>
+              <select id="filter-degree">
+                <option value="any">Any</option>
+                <option value="computer-science">Computer Science</option>
+                <option value="engineering">Engineering</option>
+                <option value="business">Business / MBA</option>
+                <option value="design">Design / UX</option>
+                <option value="data-science">Data Science / Statistics</option>
+                <option value="marketing">Marketing</option>
+                <option value="finance">Finance / Accounting</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filter-pay-min">Min Pay ($/year)</label>
+              <input type="number" id="filter-pay-min" placeholder="e.g. 50000" min="0" step="5000">
+            </div>
+            <div class="filter-group">
+              <label for="filter-pay-max">Max Pay ($/year)</label>
+              <input type="number" id="filter-pay-max" placeholder="e.g. 150000" min="0" step="5000">
+            </div>
+            <div class="filter-group">
+              <label for="filter-experience">Experience Level</label>
+              <select id="filter-experience">
+                <option value="any">Any</option>
+                <option value="entry">Entry Level</option>
+                <option value="mid">Mid Level</option>
+                <option value="senior">Senior</option>
+                <option value="lead">Lead / Staff</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filter-type">Job Type</label>
+              <select id="filter-type">
+                <option value="any">Any</option>
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="contract">Contract</option>
+                <option value="internship">Internship</option>
+              </select>
+            </div>
+          </div>
+          <p class="filter-note">Filters scan job descriptions for keywords. Results may vary by how companies write listings.</p>
         </div>
       </form>
     </section>
 
+    <div id="load-status" class="load-status"></div>
+
     <section id="results" class="results" aria-live="polite">
-      <p class="placeholder-text">Enter a search to find jobs.</p>
+      <p class="placeholder-text">Enter a search to find jobs, or just hit Search to browse all.</p>
     </section>
   </main>
 
   <footer>
     <div class="container">
-      <p>&copy; 2026 JobTracker. Built to help you land your next role.</p>
+      <p>&copy; 2026 JobTracker &middot; Powered by Greenhouse, Lever & Ashby public APIs</p>
     </div>
   </footer>
 

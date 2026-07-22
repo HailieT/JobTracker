@@ -19,25 +19,33 @@ function renderTrackedJobs() {
     return;
   }
 
-  trackedContainer.innerHTML = filtered.map(job => `
+  trackedContainer.innerHTML = filtered.map(job => {
+    const initials = (job.company || '??').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    return `
     <article class="job-card" data-id="${job.id}">
-      <h3><a href="${job.url}" target="_blank" rel="noopener">${job.title}</a></h3>
-      <p class="company">${job.company}</p>
-      <p class="meta">${job.location} &middot; ${job.type}</p>
-      <p class="meta">Saved on ${new Date(job.savedAt).toLocaleDateString()}</p>
-      <div class="status-row">
-        <span class="status-badge status-${job.status}">${job.status}</span>
-        <select aria-label="Change status for ${job.title}" data-id="${job.id}">
-          <option value="saved" ${job.status === 'saved' ? 'selected' : ''}>Saved</option>
-          <option value="applied" ${job.status === 'applied' ? 'selected' : ''}>Applied</option>
-          <option value="interview" ${job.status === 'interview' ? 'selected' : ''}>Interview</option>
-          <option value="offer" ${job.status === 'offer' ? 'selected' : ''}>Offer</option>
-          <option value="rejected" ${job.status === 'rejected' ? 'selected' : ''}>Rejected</option>
-        </select>
-        <button class="btn-remove" data-id="${job.id}">Remove</button>
+      <div class="card-avatar">${initials}</div>
+      <div class="card-body">
+        <h3><a href="${job.url}" target="_blank" rel="noopener">${job.title}</a></h3>
+        <p class="company">${job.company}</p>
+        <p class="meta">
+          <span>${job.location}</span>
+          <span class="tag">${job.type || 'Full-time'}</span>
+          <span>Saved ${new Date(job.savedAt).toLocaleDateString()}</span>
+        </p>
+        <div class="status-row">
+          <span class="status-badge status-${job.status}">${job.status}</span>
+          <select aria-label="Change status for ${job.title}" data-id="${job.id}">
+            <option value="saved" ${job.status === 'saved' ? 'selected' : ''}>Saved</option>
+            <option value="applied" ${job.status === 'applied' ? 'selected' : ''}>Applied</option>
+            <option value="interview" ${job.status === 'interview' ? 'selected' : ''}>Interview</option>
+            <option value="offer" ${job.status === 'offer' ? 'selected' : ''}>Offer</option>
+            <option value="rejected" ${job.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+          </select>
+          <button class="btn-remove" data-id="${job.id}">Remove</button>
+        </div>
       </div>
     </article>
-  `).join('');
+  `}).join('');
 
   // Status change handlers
   trackedContainer.querySelectorAll('select[data-id]').forEach(select => {
@@ -57,6 +65,4 @@ function renderTrackedJobs() {
 }
 
 statusFilter.addEventListener('change', renderTrackedJobs);
-
-// Initial render
 renderTrackedJobs();
