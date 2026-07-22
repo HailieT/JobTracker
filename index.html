@@ -31,14 +31,40 @@
         </div>
 
         <div class="location-row">
+          <select id="country" aria-label="Country">
+            <option value="any">Any Country</option>
+            <option value="us">United States</option>
+            <option value="ca">Canada</option>
+            <option value="uk">United Kingdom</option>
+            <option value="de">Germany</option>
+            <option value="nl">Netherlands</option>
+            <option value="au">Australia</option>
+            <option value="ie">Ireland</option>
+            <option value="sg">Singapore</option>
+            <option value="in">India</option>
+          </select>
           <input type="text" id="city" placeholder="City" aria-label="City">
-          <input type="text" id="state" placeholder="State" aria-label="State">
+          <input type="text" id="state" placeholder="State / Province" aria-label="State">
           <select id="work-mode" aria-label="Work mode">
             <option value="any">Any Work Mode</option>
             <option value="remote">Remote</option>
             <option value="in-person">In-Person</option>
             <option value="hybrid">Hybrid</option>
           </select>
+        </div>
+
+        <div class="citizenship-row">
+          <label for="citizenship">I am a citizen of:</label>
+          <select id="citizenship" aria-label="Your citizenship">
+            <option value="any">Not specified</option>
+            <option value="us">United States</option>
+            <option value="ca">Canada</option>
+            <option value="uk">United Kingdom</option>
+            <option value="eu">EU Member State</option>
+            <option value="au">Australia</option>
+            <option value="other">Other</option>
+          </select>
+          <span class="citizenship-hint" id="citizenship-hint"></span>
         </div>
 
         <button type="button" id="toggle-filters" class="toggle-filters-btn" aria-expanded="false" aria-controls="advanced-filters">

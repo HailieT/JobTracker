@@ -405,9 +405,9 @@ const JOB_TYPE_KEYWORDS = {
 // ============================================================
 
 /** Fetch jobs from a single Greenhouse company board. */
-async function fetchGreenhouseJobs(slug, companyName) {
+async function fetchGreenhouseJobs(slug, companyName, signal) {
   const url = `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
   if (!response.ok) return [];
   const data = await response.json();
   return (data.jobs || []).map(job => ({
@@ -423,9 +423,9 @@ async function fetchGreenhouseJobs(slug, companyName) {
 }
 
 /** Fetch jobs from a single Lever company board. */
-async function fetchLeverJobs(slug, companyName) {
+async function fetchLeverJobs(slug, companyName, signal) {
   const url = `https://api.lever.co/v0/postings/${slug}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
   if (!response.ok) return [];
   const data = await response.json();
   if (!Array.isArray(data)) return [];
@@ -442,9 +442,9 @@ async function fetchLeverJobs(slug, companyName) {
 }
 
 /** Fetch jobs from a single Ashby company board. */
-async function fetchAshbyJobs(slug, companyName) {
+async function fetchAshbyJobs(slug, companyName, signal) {
   const url = `https://api.ashbyhq.com/posting-api/job-board/${slug}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
   if (!response.ok) return [];
   const data = await response.json();
   const jobs = data.jobs || [];
@@ -463,30 +463,37 @@ async function fetchAshbyJobs(slug, companyName) {
 /**
  * Fetch jobs from all three ATS platforms in parallel batches.
  * Throws an error if no jobs can be fetched from any source.
+ * Accepts an AbortSignal to cancel in-flight requests.
  */
-async function fetchAllJobs() {
+async function fetchAllJobs(signal) {
   let allJobs = [];
   let successCount = 0;
-  const BATCH_SIZE = 40; // Larger batches = faster loading
+  const BATCH_SIZE = 40;
 
   // Build a unified task list
   const tasks = [];
   for (const [slug, name] of Object.entries(GREENHOUSE_COMPANIES)) {
-    tasks.push(() => fetchGreenhouseJobs(slug, name));
+    tasks.push(() => fetchGreenhouseJobs(slug, name, signal));
   }
   for (const [slug, name] of Object.entries(LEVER_COMPANIES)) {
-    tasks.push(() => fetchLeverJobs(slug, name));
+    tasks.push(() => fetchLeverJobs(slug, name, signal));
   }
   for (const [slug, name] of Object.entries(ASHBY_COMPANIES)) {
-    tasks.push(() => fetchAshbyJobs(slug, name));
+    tasks.push(() => fetchAshbyJobs(slug, name, signal));
   }
 
   // Process in batches with progress updates
   const totalBatches = Math.ceil(tasks.length / BATCH_SIZE);
   for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
+    // Check if aborted before starting next batch
+    if (signal && signal.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
     const batchNum = Math.floor(i / BATCH_SIZE) + 1;
     if (loadStatus) {
-      loadStatus.textContent = `Loading jobs... (batch ${batchNum}/${totalBatches})`;
+      const jobCount = allJobs.length > 0 ? ` — ${allJobs.length.toLocaleString()} jobs found so far` : '';
+      loadStatus.textContent = `Loading companies (${batchNum}/${totalBatches})${jobCount}`;
     }
 
     const batch = tasks.slice(i, i + BATCH_SIZE);
@@ -502,7 +509,7 @@ async function fetchAllJobs() {
 
   if (loadStatus) {
     loadStatus.textContent = successCount > 0 
-      ? `✓ Loaded ${allJobs.length.toLocaleString()} jobs from ${successCount} companies`
+      ? `✓ Ready — ${allJobs.length.toLocaleString()} jobs loaded from ${successCount} companies`
       : '';
   }
 
@@ -589,12 +596,10 @@ function jobMatchesFilters(job, filters) {
   if (filters.experience !== 'any') {
     const keywords = EXPERIENCE_KEYWORDS[filters.experience];
     if (filters.experience === 'entry') {
-      // For entry level: include jobs that either mention entry-level keywords
-      // OR don't mention senior/lead/staff/principal/director in the title
+      // For entry level: exclude jobs with senior/lead/staff in the title
       const titleLower = job.title.toLowerCase();
       const hasSeniorSignals = ['senior', 'sr.', 'sr ', 'staff', 'principal', 'lead', 'director', 'head of', 'vp ', 'manager', 'architect'].some(kw => titleLower.includes(kw));
-      const hasEntrySignals = textMatchesKeywords(fullText, keywords);
-      if (hasSeniorSignals && !hasEntrySignals) return false;
+      if (hasSeniorSignals) return false;
     } else {
       if (keywords && !textMatchesKeywords(fullText, keywords)) return false;
     }
@@ -607,6 +612,122 @@ function jobMatchesFilters(job, filters) {
 
   return true;
 }
+
+// ============================================================
+// COUNTRY & WORK AUTHORIZATION HELPERS
+// ============================================================
+
+const COUNTRY_KEYWORDS = {
+  'us': ['united states', 'usa', ', us', 'u.s.', 'new york', 'san francisco', 'los angeles', 'chicago', 'seattle', 'austin', 'boston', 'denver', 'atlanta', 'miami', 'dallas', 'houston', 'phoenix', 'philadelphia', ', ca', ', ny', ', tx', ', wa', ', ma', ', co', ', il', ', ga', ', fl', ', az', ', pa'],
+  'ca': ['canada', 'toronto', 'vancouver', 'montreal', 'ottawa', 'calgary', ', on', ', bc', ', qc', ', ab'],
+  'uk': ['united kingdom', ', uk', 'london', 'manchester', 'edinburgh', 'bristol', 'birmingham', 'england', 'scotland', 'wales'],
+  'de': ['germany', 'berlin', 'munich', 'hamburg', 'frankfurt', 'deutschland'],
+  'nl': ['netherlands', 'amsterdam', 'rotterdam', 'the hague', 'utrecht', 'holland'],
+  'au': ['australia', 'sydney', 'melbourne', 'brisbane', 'perth', 'adelaide'],
+  'ie': ['ireland', 'dublin', 'cork', 'galway'],
+  'sg': ['singapore'],
+  'in': ['india', 'bangalore', 'bengaluru', 'mumbai', 'hyderabad', 'pune', 'delhi', 'chennai', 'gurgaon', 'noida']
+};
+
+// Which countries can citizens work in without sponsorship
+const WORK_RIGHTS = {
+  'us': ['us'],           // US citizens can work in US
+  'ca': ['ca'],           // Canadian citizens can work in Canada
+  'uk': ['uk', 'ie'],     // UK citizens can work in UK and Ireland (CTA)
+  'eu': ['de', 'nl', 'ie'], // EU citizens can work in EU countries
+  'au': ['au'],           // Australian citizens can work in Australia
+  'other': []             // Other citizenship — no automatic rights
+};
+
+function matchJobCountry(job, country, isRemoteJob) {
+  if (country === 'any') return true;
+  // Remote jobs with no specific country mentioned are shown for any country
+  if (isRemoteJob) return true;
+
+  const locationLower = job.location.toLowerCase();
+  const keywords = COUNTRY_KEYWORDS[country];
+  if (!keywords) return true;
+
+  return keywords.some(kw => locationLower.includes(kw));
+}
+
+function matchWorkAuthorization(job, citizenship, country, isRemoteJob) {
+  if (citizenship === 'any') return true;
+
+  const locationLower = job.location.toLowerCase();
+  const descLower = job.description.toLowerCase();
+
+  // Determine which country the job is in
+  let jobCountry = detectJobCountry(locationLower);
+
+  // If job country can't be determined, don't filter it out
+  if (!jobCountry) return true;
+
+  // If it's remote and the user has the target country selected, show it
+  if (isRemoteJob) return true;
+
+  // Check if user has work rights in the job's country
+  const allowedCountries = WORK_RIGHTS[citizenship] || [];
+  if (allowedCountries.includes(jobCountry)) return true;
+
+  // Check if job mentions visa sponsorship
+  const sponsorsVisa = descLower.includes('visa sponsorship') ||
+    descLower.includes('sponsor visa') ||
+    descLower.includes('sponsorship available') ||
+    descLower.includes('will sponsor') ||
+    descLower.includes('immigration sponsorship');
+
+  if (sponsorsVisa) return true;
+
+  // If the job explicitly requires specific authorization the user doesn't have, exclude
+  const requiresAuth = descLower.includes('must be authorized to work') ||
+    descLower.includes('work authorization required') ||
+    descLower.includes('no sponsorship') ||
+    descLower.includes('without sponsorship') ||
+    descLower.includes('not sponsor') ||
+    descLower.includes('cannot sponsor') ||
+    descLower.includes('will not sponsor');
+
+  if (requiresAuth && !allowedCountries.includes(jobCountry)) return false;
+
+  return true;
+}
+
+function detectJobCountry(locationLower) {
+  for (const [code, keywords] of Object.entries(COUNTRY_KEYWORDS)) {
+    if (keywords.some(kw => locationLower.includes(kw))) {
+      return code;
+    }
+  }
+  return null;
+}
+
+function updateCitizenshipHint(citizenship, country) {
+  const hint = document.getElementById('citizenship-hint');
+  if (!hint) return;
+
+  if (citizenship === 'any' || country === 'any') {
+    hint.textContent = '';
+    return;
+  }
+
+  const allowedCountries = WORK_RIGHTS[citizenship] || [];
+  if (allowedCountries.includes(country)) {
+    hint.textContent = '✓ You can work here without sponsorship';
+    hint.style.color = '#16a34a';
+  } else {
+    hint.textContent = '⚠ You may need a visa or work permit for this country';
+    hint.style.color = '#ea580c';
+  }
+}
+
+// Update hint when either dropdown changes
+document.getElementById('citizenship').addEventListener('change', function() {
+  updateCitizenshipHint(this.value, document.getElementById('country').value);
+});
+document.getElementById('country').addEventListener('change', function() {
+  updateCitizenshipHint(document.getElementById('citizenship').value, this.value);
+});
 
 // ============================================================
 // SEARCH EVENT HANDLER
@@ -655,8 +776,13 @@ searchForm.addEventListener('submit', async function(e) {
   const query = document.getElementById('query').value.trim().toLowerCase();
   const city = document.getElementById('city').value.trim().toLowerCase();
   const state = document.getElementById('state').value.trim().toLowerCase();
+  const country = document.getElementById('country').value;
   const workMode = document.getElementById('work-mode').value;
+  const citizenship = document.getElementById('citizenship').value;
   const filters = getFilters();
+
+  // Update citizenship hint
+  updateCitizenshipHint(citizenship, country);
 
   resultsContainer.innerHTML = '<div class="loading">Searching</div>';
 
@@ -694,6 +820,12 @@ searchForm.addEventListener('submit', async function(e) {
         locationLower.includes(state) ||
         descLower.includes(state);
 
+      // Country filter
+      const matchesCountry = matchJobCountry(job, country, isRemoteJob);
+
+      // Work authorization based on citizenship
+      const matchesCitizenship = matchWorkAuthorization(job, citizenship, country, isRemoteJob);
+
       let matchesWorkMode = true;
       if (workMode === 'remote') {
         matchesWorkMode = isRemoteJob;
@@ -707,7 +839,7 @@ searchForm.addEventListener('submit', async function(e) {
       }
 
       const matchesFilters = jobMatchesFilters(job, filters);
-      return matchesQuery && matchesCity && matchesState && matchesWorkMode && matchesFilters;
+      return matchesQuery && matchesCity && matchesState && matchesCountry && matchesCitizenship && matchesWorkMode && matchesFilters;
     });
 
     const limited = filtered.slice(0, 80);

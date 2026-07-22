@@ -188,6 +188,41 @@ nav a.active {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.citizenship-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.citizenship-row label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.citizenship-row select {
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  background: white;
+}
+
+.citizenship-row select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.citizenship-hint {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  font-style: italic;
+}
+
 /* === Advanced Filters === */
 .toggle-filters-btn {
   background: none;
